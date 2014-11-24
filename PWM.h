@@ -2,4 +2,4 @@
 ////////////////////////////////////////////////////////////////
 void InPWM();
 void MoveRobot(int state);
-
+int Barcode(int BarR, int state);
