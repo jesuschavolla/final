@@ -8,6 +8,7 @@
 #define Black_Middle 310 // black threshold, upper limit
 #define Black_Right 315
 
+
  #define Speed 400 // speed of motors at "full" speed
 #define Pause 10 // speed for stop
 volatile int cnt;
