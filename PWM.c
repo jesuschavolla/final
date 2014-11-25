@@ -7,8 +7,8 @@
 #include "PWM.h"
 
 // ******************************************************************************************* //
-#define Black 160
-#define Red 240
+#define Black 180
+#define Red 280
 #define White 250
 
 void InPWM(){//initializes the PWM

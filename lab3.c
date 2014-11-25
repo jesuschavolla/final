@@ -54,6 +54,9 @@ pin 5 is RP 1 connected to pin 10 on H-bridge  (input 4)controls clockwise for r
  #define Black_Left 300
 #define Black_Middle 250 // black threshold, upper limit
 #define Black_Right 300
+#define Black 180
+#define Red 280
+#define White 500
  #define Speed 420 // speed off motors at "full" speed
 #define Pause 0 // speed for stop
 //volatile unsigned int state;//variable used to assign direction
@@ -69,7 +72,11 @@ int main(void)
 //    CNEN2bits.CN27IE = 1;//change notification for SW1
 //    IFS1bits.CNIF = 0;//enables the change notification interrupt
 //    IEC1bits.CNIE = 1;//sets flag down
-
+    int state=0;
+    int red=0;
+    int black=0;
+    int count=0;
+    int check=0;
 
    
  
@@ -122,33 +129,92 @@ int main(void)
         Right = ADCRight();
         Middle = ADCCenter();
        
-              LCDClear();
-         LCDMoveCursor(1,0);
+//              LCDClear();
+//         LCDMoveCursor(1,0);
+////
+//         sprintf(ADV,"%4.0d",Left);
+//         LCDPrintString(ADV);
 //
-         sprintf(ADV,"%4.0d",Left);
-         LCDPrintString(ADV);
-
          LCDMoveCursor(1,4);
          sprintf(ADV2,"%4.0d",Right);
          LCDPrintString(ADV2);
+//
+//         LCDMoveCursor(0,0);
+//         sprintf(ADV3,"%4.0d",Middle);
+//         LCDPrintString(ADV3);
+//        state=Barcode(Right, state);
+        //Calibrate(Left,Middle, Right);
 
-         LCDMoveCursor(0,0);
-         sprintf(ADV3,"%4.0d",Middle);
-         LCDPrintString(ADV3);
+        switch(state){
+            case 0://idle
+                if(Right<=Black && count==0){
+                    state=1;
+                    count=1;
+                }
+                else{
+                    count=0;
+                    red=0;
+                    black=0;
+                }
 
-        Calibrate(Left,Middle, Right);
+                break;
+
+            case 1://waiting for white
+                if(Right>Red && Right<=White){
+                    state=2;
+                    check=0;
+                }
+                break;
+
+            case 2://determining if it is black or red
+                if(Right<=Black && check==0){
+                    black=1;
+                    check=1;
+                }
+                if(Right>Black && Right<=Red && check==0){
+                    red=1;
+                    check=1;
+                }
+                if(check>=1){
+                    if(Right>Black && Right<=Red)
+                        red++;
+                    if(Right<=Black)
+                        black++;
+                    if((black>=10)| (red>=10)){
+                        state=3;
+                    }
+                }
+                break;
+
+            case 3://printing the corresponding number
+                if(red>black){
+                    count++;
+                    LCDMoveCursor(0,count-1);
+                    LCDPrintChar('1');
+                    state=4;
+                }
+                else if(black>red){
+                    count++;
+                    LCDMoveCursor(0,count-1);
+                    LCDPrintChar('0');
+                    state=4;
+                }
+                break;
+
+            case 4://checking if all 4 numbers were printed
+                if(count==5){
+                    state=0;
+                }
+                else{
+                    state=1;
+                    red=0;
+                    black=0;
+                    check=0;
+                    count=1;
+                }
+                break;
+
+        }
 
    }
 }
-//    void __attribute__((interrupt, auto_psv)) _CNInterrupt(void) {
-//        //change interrupt for SW1
-//
-//
-//        IFS1bits.CNIF = 0;//set flag down
-//
-//    }
-
-
-
-
-
