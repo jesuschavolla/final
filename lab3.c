@@ -52,17 +52,20 @@ pin 5 is RP 1 connected to pin 10 on H-bridge  (input 4)controls clockwise for r
 ********************************************************************/
 // ******************************************************************************************* //
  #define Black_Left 300
-#define Black_Middle 250 // black threshold, upper limit
+#define Black_Middle 250 // black threshold, upper limit for track
 #define Black_Right 300
-#define Black 180
-#define Red 280
+
+#define Black 370// threshold for barcode
+#define Red 470
 #define White 500
+
  #define Speed 420 // speed off motors at "full" speed
 #define Pause 0 // speed for stop
 //volatile unsigned int state;//variable used to assign direction
 volatile int Left;
 volatile int Right;
 volatile int Middle;
+volatile int Bar;
 
 
 int main(void)
@@ -73,10 +76,10 @@ int main(void)
 //    IFS1bits.CNIF = 0;//enables the change notification interrupt
 //    IEC1bits.CNIE = 1;//sets flag down
     int state=0;
-    int red=0;
-    int black=0;
-    int count=0;
-    int check=0;
+    int redcnt=0;
+    int blackcnt=0;
+    int pos = -1;
+    
 
    
  
@@ -84,6 +87,7 @@ int main(void)
      Left = 0;
      Right = 0;
      Middle=0;
+     Bar =0;
 
    
     
@@ -128,7 +132,7 @@ int main(void)
         Left = ADCLeft();
         Right = ADCRight();
         Middle = ADCCenter();
-       
+        Bar = ADCRight();
 //              LCDClear();
 //         LCDMoveCursor(1,0);
 ////
@@ -145,76 +149,137 @@ int main(void)
 //        state=Barcode(Right, state);
         //Calibrate(Left,Middle, Right);
 
-        switch(state){
-            case 0://idle
-                if(Right<=Black && count==0){
-                    state=1;
-                    count=1;
-                }
-                else{
-                    count=0;
-                    red=0;
-                    black=0;
-                }
 
-                break;
 
-            case 1://waiting for white
-                if(Right>Red && Right<=White){
-                    state=2;
-                    check=0;
-                }
-                break;
+         switch(state){
+             case 0: //idle
+                 if(Bar < Black)state = 1;
+                 break;
 
-            case 2://determining if it is black or red
-                if(Right<=Black && check==0){
-                    black=1;
-                    check=1;
-                }
-                if(Right>Black && Right<=Red && check==0){
-                    red=1;
-                    check=1;
-                }
-                if(check>=1){
-                    if(Right>Black && Right<=Red)
-                        red++;
-                    if(Right<=Black)
-                        black++;
-                    if((black>=10)| (red>=10)){
-                        state=3;
-                    }
-                }
-                break;
+             case 1: // start bit
+                 if(Bar > White) state =2;
+                 break;
 
-            case 3://printing the corresponding number
-                if(red>black){
-                    count++;
-                    LCDMoveCursor(0,count-1);
-                    LCDPrintChar('1');
-                    state=4;
-                }
-                else if(black>red){
-                    count++;
-                    LCDMoveCursor(0,count-1);
-                    LCDPrintChar('0');
-                    state=4;
-                }
-                break;
+             case 2: // white state
+                 if(Bar < White) state =3;
+                 break;
 
-            case 4://checking if all 4 numbers were printed
-                if(count==5){
-                    state=0;
-                }
-                else{
-                    state=1;
-                    red=0;
-                    black=0;
-                    check=0;
-                    count=1;
-                }
-                break;
+             case 3: // bit
+                 state=3;
+                 if(Bar > Black && Bar < Red) redcnt = 1;
+                 else if(Bar < Black) blackcnt = 1;
 
-        }
 
-   }
+                 else if(Bar > White){
+                     state = 4;
+                     pos++;
+                 }
+                 break;
+
+             case 4: // print state
+                 //LCDMoveCursor(0,pos);
+                 if(redcnt ==1 && blackcnt ==0){
+                     ADV3[pos] = '1';
+                    // sprintf(ADV3,"%4.0d",redcnt);
+                    // LCDPrintString(ADV3);
+                 }
+
+                 else if(redcnt ==1 && blackcnt ==1){
+                     ADV3[pos] = '0';
+                    // sprintf(ADV3,"%4.0d",(redcnt-1));
+                    //LCDPrintString(ADV3);
+                 }
+
+                 if(pos == 3){
+                     state = 0;
+                     pos =-1; 
+                     redcnt = 0;
+                     blackcnt =0;
+                     LCDMoveCursor(0,0);
+                     //sprintf(ADV3,"%4.0d",ADV3);
+                     LCDPrintString(ADV3);
+                 }
+                 else{
+                     state = 2;
+                     redcnt = 0;
+                     blackcnt = 0;
+                 }
+
+
+
+         }
+
+//        switch(state){
+//            case 0://idle
+//                if(Right<=Black && count==0){
+//                    state=1;
+//                    count=1;
+//                }
+//                else{
+//                    count=0;
+//                    red=0;
+//                    black=0;
+//                }
+//
+//                break;
+//
+//            case 1://waiting for white
+//                if(Right>Red && Right<=White){
+//                    state=2;
+//                    check=0;
+//                }
+//                break;
+//
+//            case 2://determining if it is black or red
+//                if(Right<=Black && check==0){
+//                    black=1;
+//                    check=1;
+//                }
+//                if(Right>Black && Right<=Red && check==0){
+//                    red=1;
+//                    check=1;
+//                }
+//                if(check>=1){
+//                    if(Right>Black && Right<=Red)
+//                        red++;
+//                    if(Right<=Black)
+//                        black++;
+//                    if((black>=10)| (red>=10)){
+//                        state=3;
+//                    }
+//                }
+//                break;
+//
+//            case 3://printing the corresponding number
+//                if(red>black){
+//                    count++;
+//                    LCDMoveCursor(0,count-1);
+//                    LCDPrintChar('1');
+//                    state=4;
+//                }
+//                else if(black>red){
+//                    count++;
+//                    LCDMoveCursor(0,count-1);
+//                    LCDPrintChar('0');
+//                    state=4;
+//                }
+//                break;
+//
+//            case 4://checking if all 4 numbers were printed
+//                if(count==5){
+//                    state=0;
+//                }
+//                else{
+//                    state=1;
+//                    red=0;
+//                    black=0;
+//                    check=0;
+//                    count=1;
+//                }
+//                break;
+//
+//        }
+//
+//   }
+}
 }
