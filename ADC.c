@@ -9,7 +9,7 @@
 #define Black_Right 315
 
 
- #define Speed 400 // speed of motors at "full" speed
+ #define Speed 370 // speed of motors at "full" speed
 #define Pause 10 // speed for stop
 volatile int cnt;
 void InADC(){//intializes ADC
@@ -108,6 +108,27 @@ int ADCCenter(){
 
     return(avg);//returns the ADC value
 }
+int ADCBarcode(){
+    int avg = 0;
+
+        AD1CON1bits.ADON = 0; // Turn on A/D
+
+    AD1CHS = 0x0004;    // select analog input channel-AN4
+
+    AD1CON1bits.ADON = 1; // Turn on A/D
+
+    AD1CON1bits.SAMP = 1;// start sampling, automatic conversion will follow
+
+    while(!AD1CON1bits.DONE);   // wait to complete the sampling
+    AD1CON1bits.DONE = 0; // reset flag
+
+    AD1CON1bits.ADON = 0; // Turn on A/D
+
+    avg = (ADC1BUF0 + ADC1BUF1 + ADC1BUF2 + ADC1BUF3 + ADC1BUF4 + ADC1BUF5 + ADC1BUF6 + ADC1BUF7 + ADC1BUF8 +
+            ADC1BUF9 + ADC1BUFA + ADC1BUFB + ADC1BUFC + ADC1BUFD + ADC1BUFE + ADC1BUFF)/16;
+
+    return(avg);//returns the ADC value
+}
 
 void Calibrate(int Left, int Middle, int Right){
     //int i=0;
@@ -118,7 +139,7 @@ void Calibrate(int Left, int Middle, int Right){
         TMR4=0;
         cnt = 0;
         RPOR4bits.RP8R= 19;//input 1 red left motor
-        RPOR1bits.RP2R = 0;//input 2 black left motor
+        RPOR5bits.RP10R = 0;//input 2 black left motor
         RPOR0bits.RP0R = 18;//input 4 red right motor
         RPOR0bits.RP1R = 0;//input 3 black left motor
 //        if(OC1RS > 512   && OC2RS > 512){ // if it is going too fast
@@ -167,7 +188,7 @@ void Calibrate(int Left, int Middle, int Right){
 
     if(cnt >= 250){
         RPOR4bits.RP8R= 19;//input 1 red left motor
-        RPOR1bits.RP2R = 0;//input 2 black left motor
+        RPOR5bits.RP10R = 0;//input 2 black left motor
         RPOR0bits.RP0R = 0;//input 4 red right motor
         RPOR0bits.RP1R = 18;//input 3 black left motor
 

@@ -13,8 +13,8 @@
 
 void InPWM(){//initializes the PWM
         //sets all pins connected to the two motors to null
-            RPOR1bits.RP3R = 0;
-            RPOR1bits.RP2R = 0;
+            RPOR4bits.RP8R = 0;
+            RPOR5bits.RP10R = 0;
             RPOR0bits.RP0R = 0;
             RPOR0bits.RP1R = 0;
 //sets timer 3 which is used for the output compare 1

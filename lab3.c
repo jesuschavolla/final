@@ -55,11 +55,11 @@ pin 5 is RP 1 connected to pin 10 on H-bridge  (input 4)controls clockwise for r
 #define Black_Middle 250 // black threshold, upper limit for track
 #define Black_Right 300
 
-#define Black 370// threshold for barcode
-#define Red 470
-#define White 500
+#define Black 490// threshold for barcode
+#define Red 700
+#define White 710
 
- #define Speed 420 // speed off motors at "full" speed
+ #define Speed 370 // speed off motors at "full" speed
 #define Pause 0 // speed for stop
 //volatile unsigned int state;//variable used to assign direction
 volatile int Left;
@@ -110,13 +110,14 @@ int main(void)
    InPWM();
 
    TRISBbits.TRISB5 = 1;
+   LCDClear();
    while(PORTBbits.RB5 == 1);
 
    OC1RS = Speed;
    OC2RS = Speed;
 
    RPOR4bits.RP8R= 19;//input 1 red left motor
-   RPOR1bits.RP2R = 0;//input 2 black left motor
+   RPOR5bits.RP10R = 0;//input 2 black left motor
 
    RPOR0bits.RP0R = 18;//input 4 red right motor
    RPOR0bits.RP1R = 0;//input 3 black left motor
@@ -132,7 +133,7 @@ int main(void)
         Left = ADCLeft();
         Right = ADCRight();
         Middle = ADCCenter();
-        Bar = ADCRight();
+        Bar = ADCBarcode();
 //              LCDClear();
 //         LCDMoveCursor(1,0);
 ////
@@ -140,14 +141,14 @@ int main(void)
 //         LCDPrintString(ADV);
 //
          LCDMoveCursor(1,4);
-         sprintf(ADV2,"%4.0d",Right);
+         sprintf(ADV2,"%4.0d",Bar);
          LCDPrintString(ADV2);
 //
 //         LCDMoveCursor(0,0);
 //         sprintf(ADV3,"%4.0d",Middle);
 //         LCDPrintString(ADV3);
 //        state=Barcode(Right, state);
-        //Calibrate(Left,Middle, Right);
+        Calibrate(Left,Middle, Right);
 
 
 
